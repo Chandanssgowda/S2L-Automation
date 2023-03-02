@@ -9,17 +9,14 @@ import com.simplifyqa.sqadrivers.webdriver;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Arrays;
 
-import com.mysql.cj.result.IntegerValueFactory;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simplifyqa.Utility.InitializeDependence;
 import com.simplifyqa.method.GeneralMethod;
-
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.math3.analysis.function.Subtract;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.openqa.selenium.By;
 import org.openqa.selenium.support.Color;
 
 public class CustomMethods {
@@ -70,9 +67,8 @@ public class CustomMethods {
 
                 if (LoadmoreCount == 1) {
                     Thread.sleep(500);
-                    // webdriver.waituntilelementexist("xpath", "//button[@class='btn mx-button
-                    // mx-listview-loadMore']/span");
                     webdriver.scrollIntoView("xpath", "//button[@class='btn mx-button mx-listview-loadMore']/span");
+                    Thread.sleep(500);
                     webdriver.click("xpath", "//button[@class='btn mx-button mx-listview-loadMore']/span");
                     Thread.sleep(500);
 
@@ -135,9 +131,8 @@ public class CustomMethods {
 
                 if (LoadmoreCount == 1) {
                     Thread.sleep(500);
-                    // webdriver.waituntillele("xpath", "//button[@class='btn mx-button
-                    // mx-listview-loadMore']/span");
                     webdriver.scrollIntoView("xpath", "//button[@class='btn mx-button mx-listview-loadMore']/span");
+                    Thread.sleep(500);
                     webdriver.click("xpath", "//button[@class='btn mx-button mx-listview-loadMore']/span");
                     Thread.sleep(500);
 
@@ -483,7 +478,7 @@ public class CustomMethods {
 
     public boolean getdateDifference(String startDate, String EndDate, String Store) {
         try {
-            
+
             SimpleDateFormat obj = new SimpleDateFormat("dd MMM yy");
             Date date1 = obj.parse(startDate);
             Date date2 = obj.parse(EndDate);
@@ -491,7 +486,7 @@ public class CustomMethods {
             Calendar cal2 = Calendar.getInstance();
             cal1.setTime(date1);
             cal2.setTime(date2);
-            int numberOfDays = 0 ;
+            int numberOfDays = 0;
             while (cal1.before(cal2)) {
                 if ((Calendar.SATURDAY != cal1.get(Calendar.DAY_OF_WEEK))
                         && (Calendar.SUNDAY != cal1.get(Calendar.DAY_OF_WEEK))) {
@@ -500,13 +495,13 @@ public class CustomMethods {
                 cal1.add(Calendar.DATE, 1);
             }
             System.out.println("Exclude saturday and sunday total Number of days :" + numberOfDays);
-            String val = String.valueOf(numberOfDays); 
-           int[] array = {2};
-        String[] value = gm.runtimeparameter(array);
-        for (int i = 0; i < value.length; i++) {
-            Store = value[i];
-            webdriver.storeruntime(Store, val);
-         }
+            String val = String.valueOf(numberOfDays);
+            int[] array = { 2 };
+            String[] value = gm.runtimeparameter(array);
+            for (int i = 0; i < value.length; i++) {
+                Store = value[i];
+                webdriver.storeruntime(Store, val);
+            }
             return true;
         } catch (Exception e) {
             return false;
@@ -602,41 +597,76 @@ public class CustomMethods {
 
     }
 
-    public boolean CheckSorting(String ReplaceValue, String RowValueXpath) {
+    public boolean CheckSorting(String ReplaceHeaderValue) {
+
+        List<String> list1 = new LinkedList();
+        List<String> list2 = new LinkedList();
+        List<String> list3 = new LinkedList();
+        List<String> list4 = new LinkedList();
 
         try {
-
-            int RowCount = webdriver.findElements("xpath", RowValueXpath).length();
-
-            List<String> list1 = new ArrayList();
-
-            for (int i = 1; i <= RowCount; i++) {
-
-                String x = "(" + RowValueXpath + ")[" + (i) + "]";
-
-                String id = webdriver.getElementId("xpath", x);
-
-                String Rvalues = webdriver.getElementproperty(id, "innerText");
-
-                list1.add(Rvalues);
+            String locatorvalue = "", locatorKey = "";
+            for (JsonNode attr : webdriver.getCurrentObject().getAttributes()) {
+                if (attr.get("name").asText().toLowerCase().equals("xpath")) {
+                    locatorKey = attr.get("name").asText();
+                    locatorvalue = attr.get("value").asText();
+                    break;
+                }
+                if (attr.get("name").asText().toLowerCase().equals("id")) {
+                    locatorKey = attr.get("name").asText();
+                    locatorvalue = attr.get("value").asText();
+                    break;
+                }
+                if (attr.get("name").asText().toLowerCase().equals("class")) {
+                    locatorKey = attr.get("name").asText();
+                    locatorvalue = attr.get("value").asText();
+                    break;
+                }
             }
 
-            Collections.sort(list1); // To sort ascending order
+            Boolean StatusFlag = true;
+            while (StatusFlag) {
 
-            webdriver.clickusingdynamicxpath(ReplaceValue);
+                int RowCount = webdriver.findElements(locatorKey, locatorvalue).length(); // tbody[@dojoattachpoint='gridBodyNode']/tr/td[5]
+
+                for (int i = 1; i <= RowCount; i++) {
+
+                    String x = "(" + locatorvalue + ")[" + (i) + "]";
+
+                    String id = webdriver.getElementId("xpath", x);
+
+                    String Rvalues = webdriver.getElementproperty(id, "innerText");
+
+                    list1.add(Rvalues);
+                }
+
+                int FrwrdPageButton = webdriver
+                        .findElements("xpath",
+                                "//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward']")
+                        .length();
+
+                if (FrwrdPageButton == 1) {
+                    webdriver.click("xpath",
+                            "//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward']");
+                } else {
+                    StatusFlag = false;
+                }
+            }
+            webdriver.click("xpath",
+                    "//div[@class='mx-datagrid-head-caption' and contains(text(),'" + ReplaceHeaderValue + "')]");
             Thread.sleep(400);
             int UpArrowIcon = webdriver.findElements("xpath",
                     "//button[contains(@class,'btn_border') and text()='Open Project']/../../..//th//div[text()='"
-                            + ReplaceValue + "']/..//span[text()='▲']")
+                            + ReplaceHeaderValue + "']/..//span[text()='▲']")
                     .length();
 
             if (UpArrowIcon == 1) {
 
-                List<String> list2 = new ArrayList();
-
+                int RowCount = webdriver.findElements(locatorKey, locatorvalue).length();
+                // List<String> list2 = new LinkedList();
                 for (int i = 1; i <= RowCount; i++) {
 
-                    String x = "(" + RowValueXpath + ")[" + (i) + "]";
+                    String x = "(" + locatorvalue + ")[" + (i) + "]";
 
                     String id = webdriver.getElementId("xpath", x);
 
@@ -644,68 +674,92 @@ public class CustomMethods {
 
                     list2.add(Rvalues);
                 }
-
-                if (list1.toString().equals(list2.toString())) {
-
-                    System.out.println(" Ascending order Sorting performed as Expected ");
-
-                } else {
-
-                    return false;
-
-                }
-
-                List<String> list3 = new ArrayList();
-                for (int i = 1; i <= RowCount; i++) {
-
-                    String x = "(" + RowValueXpath + ")[" + (i) + "]";
-
-                    String id1 = webdriver.getElementId("xpath", x);
-
-                    String R1values = webdriver.getElementproperty(id1, "innerText");
-
-                    list3.add(R1values);
-                }
-                Collections.reverse(list3);
-
-                webdriver.click("xpath",
-                        "//button[contains(@class,'btn_border') and text()='Open Project']/../../..//th//div[text()='"
-                                + ReplaceValue + "']/..//span[text()='▲']");
-
-                List<String> list4 = new ArrayList();
-                for (int i = 1; i <= RowCount; i++) {
-
-                    String x = "(" + RowValueXpath + ")[" + (i) + "]";
-
-                    String id1 = webdriver.getElementId("xpath", x);
-
-                    String R1values = webdriver.getElementproperty(id1, "innerText");
-
-                    list4.add(R1values);
-                }
-
-                if (list3.toString().equals(list4.toString())) {
-
-                    System.out.println(" Decending order Sorting performed as Expected ");
-
-                } else {
-
-                    return false;
-
-                }
-                return true;
-
             } else {
-
                 return false;
-
             }
+
+            webdriver.click("xpath",
+                    "//button[@aria-label='Go to first page']//span[@class='glyphicon glyphicon-step-backward']");
+
+            Boolean DStatusFlag = true;
+            while (DStatusFlag) {
+
+                int RowCount = webdriver.findElements(locatorKey, locatorvalue).length(); // tbody[@dojoattachpoint='gridBodyNode']/tr/td[5]
+                // List<String> list3 = new LinkedList();
+
+                for (int i = 1; i <= RowCount; i++) {
+
+                    String x = "(" + locatorvalue + ")[" + (i) + "]";
+
+                    String id = webdriver.getElementId("xpath", x);
+
+                    String Rvalues = webdriver.getElementproperty(id, "innerText");
+
+                    list3.add(Rvalues);
+                }
+
+                int FrwrdPageButton = webdriver
+                        .findElements("xpath",
+                                "//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward']")
+                        .length();
+
+                if (FrwrdPageButton == 1) {
+                    webdriver.click("xpath",
+                            "//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward']");
+                } else {
+                    StatusFlag = false;
+                }
+            }
+            webdriver.click("xpath",
+                    "//div[@class='mx-datagrid-head-caption' and contains(text(),'" + ReplaceHeaderValue + "')]");
+            Thread.sleep(400);
+            int BackwardArrowIcon = webdriver
+                    .findElements("xpath", "//div[text()='" + ReplaceHeaderValue + "']/..//span[text()='▼']").length();
+
+            if (BackwardArrowIcon == 1) {
+
+                int RowCount = webdriver.findElements(locatorKey, locatorvalue).length();
+                // List<String> list4 = new LinkedList();
+                for (int i = 1; i <= RowCount; i++) {
+
+                    String x = "(" + locatorvalue + ")[" + (i) + "]";
+
+                    String id = webdriver.getElementId("xpath", x);
+
+                    String Rvalues = webdriver.getElementproperty(id, "innerText");
+
+                    list4.add(Rvalues);
+                }
+            } else {
+                return false;
+            }
+
+            Collections.sort(list1);
+
+            System.out.println("Expected Ascending order values are :" + list1);
+
+            Collections.sort(list3, Collections.reverseOrder());
+
+            System.out.println("Expected Ascending order values are :" + list3);
+
+            if (list1.equals(list2)) {
+                System.out.println("Ascending order is working as expected");
+            } else {
+                System.out.println("Ascending order is not working as expected");
+                return false;
+            }
+
+            if (list3.equals(list4)) {
+                System.out.println("Decending order is working as expected");
+            } else {
+                System.out.println("Decending order is not working as expected");
+                return false;
+            }
+            return true;
 
         } catch (Exception e) {
             return false;
         }
-        // return false;
-
     }
 
     public boolean ValidatePredecessorCalculation(String Date1, String Date2) throws Exception {
@@ -838,21 +892,21 @@ public class CustomMethods {
                 webdriver.click("xpath",
                         "(//img[contains(@class,'mx-image mx-name-image') and contains(@class,'img-responsive') and contains(@class,'uparrow')])["
                                 + i + "]");
-                                Thread.sleep(1000);
+                Thread.sleep(1000);
             }
 
             int ActualDurationCount = webdriver.findElements("xpath",
                     "(//div[contains(@class,'mx-dataview-content')]/div/ul/li)[1]/div//div[11]//div//span[contains(@class,'cont-font')]")
                     .length();
-                    Thread.sleep(500);
+            Thread.sleep(500);
             int PlannedDurationCount = webdriver.findElements("xpath",
                     "(//div[contains(@class,'mx-dataview-content')]/div/ul/li)[1]/div//div[10]//span[contains(@class,'cont-font')]")
                     .length();
-                    Thread.sleep(500);
+            Thread.sleep(500);
             int VCount = webdriver.findElements("xpath",
                     "(//div[contains(@class,'mx-dataview-content')]/div/ul/li)[1]/div//div[12]//div//span[contains(@class,'cont-font')]")
                     .length();
-                    Thread.sleep(500);
+            Thread.sleep(500);
 
             if (ActualDurationCount == 0 && PlannedDurationCount == 0 && VCount == 0) {
 
@@ -867,43 +921,44 @@ public class CustomMethods {
                                     + i + "]");
                     String Avalue = webdriver.getElementproperty(aid, "innerText");
                     int A = Integer.valueOf(Avalue);
-                   
-                        String pid = webdriver.getElementId("xpath",
-                                "((//div[contains(@class,'mx-dataview-content')]/div/ul/li)[1]/div//div[10]//span[contains(@class,'cont-font')])["
-                                        + i + "]");
-                        String Pvalue = webdriver.getElementproperty(pid, "innerText");
-                        int P = Integer.valueOf(Pvalue);
 
-                        int C = A - P;
+                    String pid = webdriver.getElementId("xpath",
+                            "((//div[contains(@class,'mx-dataview-content')]/div/ul/li)[1]/div//div[10]//span[contains(@class,'cont-font')])["
+                                    + i + "]");
+                    String Pvalue = webdriver.getElementproperty(pid, "innerText");
+                    int P = Integer.valueOf(Pvalue);
 
-                        System.out.println("Value of A-P is:" + C);
-                        
-                            String vid = webdriver.getElementId("xpath",
-                                    "((//div[contains(@class,'mx-dataview-content')]/div/ul/li)[1]/div//div[12]//div//span[contains(@class,'cont-font')])["
-                                            + i + "]");
-                            String Vvalue = webdriver.getElementproperty(vid, "innerText");
-                            int V = Integer.valueOf(Vvalue);                            
+                    int C = A - P;
 
-                                if (C == V) {
+                    System.out.println("Value of A-P is:" + C);
 
-                                    System.out.println(
-                                            "Predecessor Calculations for 1st milestone's subtasks are working as expected for "+i+"th Value");
+                    String vid = webdriver.getElementId("xpath",
+                            "((//div[contains(@class,'mx-dataview-content')]/div/ul/li)[1]/div//div[12]//div//span[contains(@class,'cont-font')])["
+                                    + i + "]");
+                    String Vvalue = webdriver.getElementproperty(vid, "innerText");
+                    int V = Integer.valueOf(Vvalue);
 
-                                } else {
-                                    System.out.println(
-                                            "Predecessor Calculations for 1st milestone's subtasks are not working as expected for "+i+"th Value");
-                                    return false;
-                                }
-                            }
+                    if (C == V) {
 
-                        }
+                        System.out.println(
+                                "Predecessor Calculations for 1st milestone's subtasks are working as expected for " + i
+                                        + "th Value");
+
+                    } else {
+                        System.out.println(
+                                "Predecessor Calculations for 1st milestone's subtasks are not working as expected for "
+                                        + i + "th Value");
+                        return false;
+                    }
+                }
+
+            }
             return true;
-        }catch(
+        } catch (
 
-    Exception e)
-    {
-        return false;
-    }
+        Exception e) {
+            return false;
+        }
     }
 
     public boolean ColorValidation(String input) {
@@ -965,5 +1020,185 @@ public class CustomMethods {
         }
         return true;
     }
+
+
+
+    GeneralMethod gn = new GeneralMethod();
+
+    public boolean separateDate(String runtimeval, String seperator, String runTimeParam) {
+		boolean bstatus = false;
+		String finalDate = "";
+		try {
+         
+			int index = 0;
+         
+           try {
+            // Getting runtime data with provided input value.
+            String replacevalue2 = "";
+            replacevalue2 = gn.getfromruntimefortestdata(runtimeval);
+            if (replacevalue2.isEmpty()) {
+                runtimeval = runtimeval;
+            } else {
+                // If runtime data not available then assgining input data
+                runtimeval = replacevalue2;
+            }
+        } catch (Exception e) {
+            // If runtime data not available then assgining input data.
+            runtimeval = runtimeval;
+        }
+            webdriver.getCurrentObject().setAttributes(InitializeDependence.findattrReplace(webdriver.getCurrentObject().getAttributes(), runtimeval));
+		 
+		 	String ele1=webdriver.getElementId();
+			String ele2 = webdriver.getElementproperty(ele1, "innerText");
+
+			String[] stringList = ele2.split(" ");
+			// String a1 = stringList[index];
+			// 06 Feb 23 16 Aug 2023
+			String a1 = "";
+			if (Integer.parseInt(seperator) == 1) {
+				a1 = stringList[0] + " " + stringList[1] + " " + stringList[2];
+               // bstatus =true;
+			} else if (Integer.parseInt(seperator) == 2) {
+				a1 = stringList[3] + " " + stringList[4] + " " + stringList[5];
+                
+			}
+			System.out.println("==" + a1 + "==");
+			SimpleDateFormat originalFormat = new SimpleDateFormat("dd MMM yy");
+			Date date = originalFormat.parse(a1);
+			SimpleDateFormat newFormat = new SimpleDateFormat("dd MMM yyyy");
+			finalDate = newFormat.format(date);
+			System.out.println(date + "  --> " + finalDate);
+			
+		 gn.storeruntime(runTimeParam, finalDate);
+         bstatus =true;
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return bstatus;
+	}
+	
+	public boolean getAndStoreRuntime(String getruntimevalue,  String sendRunTimeValue) {
+		boolean bstatus = false;
+		
+		try {
+			String valuetoINsert=gn.getfromruntimefortestdata(getruntimevalue);
+            if(valuetoINsert.isEmpty()) {
+				valuetoINsert = getruntimevalue;
+			}
+			webdriver.getCurrentObject().setAttributes(InitializeDependence.findattrReplace(webdriver.getCurrentObject().getAttributes(), valuetoINsert));
+			String ele1=webdriver.getElementId();
+			String ele2 = webdriver.getElementproperty(ele1, "innerText");
+			System.out.println("ele2 --> "+ele2);
+			gn.storeruntime(sendRunTimeValue, ele2);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return bstatus;
+	}
+
+    public boolean mousehoveranelement(String getruntimevalue) {
+        try {
+          
+            try {
+                // Getting runtime data with provided input value.
+                String replacevalue2 = "";
+                replacevalue2 = gn.getfromruntimefortestdata(getruntimevalue);
+                if (replacevalue2.isEmpty()) {
+                    getruntimevalue = getruntimevalue;
+                } else {
+                    // If runtime data not available then assgining input data
+                    getruntimevalue = replacevalue2;
+                }
+            } catch (Exception e) {
+                // If runtime data not available then assgining input data.
+                getruntimevalue = getruntimevalue;
+            }
+			String locatorvalue="",locatorKey="";
+            for (JsonNode attr : webdriver.getCurrentObject().getAttributes()) {
+                if (attr.get("name").asText().toLowerCase().equals("xpath")) {
+                    locatorKey=attr.get("name").asText();
+                    locatorvalue = attr.get("value").asText();
+                    break;
+                } if (attr.get("name").asText().toLowerCase().equals("id")) {
+                    locatorKey=attr.get("name").asText();
+                    locatorvalue = attr.get("value").asText();
+                    break;
+                } if (attr.get("name").asText().toLowerCase().equals("class")) {
+                    locatorKey=attr.get("name").asText();
+                    locatorvalue = attr.get("value").asText();
+                    break;
+                }
+            }
+            locatorvalue=locatorvalue.replace("#replace", getruntimevalue);
+           return webdriver.movetoelement(locatorKey, locatorvalue);
+        
+        } catch (Exception e) {
+            e.printStackTrace();
+            webdriver.logger.info("mousehoveranelement Exception:" + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean elementposition(String valueToSearch, String sendRunTimeValue){
+        try
+        {
+            JSONObject res;
+            String locatorvalue="",locatorKey="";
+            for (JsonNode attr : webdriver.getCurrentObject().getAttributes()) {
+                if (attr.get("name").asText().toLowerCase().equals("xpath")) {
+                    locatorKey=attr.get("name").asText();
+                    locatorvalue = attr.get("value").asText();
+                    break;
+                } if (attr.get("name").asText().toLowerCase().equals("id")) {
+                    locatorKey=attr.get("name").asText();
+                    locatorvalue = attr.get("value").asText();
+                    break;
+                } if (attr.get("name").asText().toLowerCase().equals("class")) {
+                    locatorKey=attr.get("name").asText();
+                    locatorvalue = attr.get("value").asText();
+                    break;
+                }
+            }
+            try {
+                // Getting runtime data with provided input value.
+                String replacevalue2 = "";
+                replacevalue2 = gn.getfromruntimefortestdata(valueToSearch);
+                if (replacevalue2.isEmpty()) {
+                    valueToSearch = valueToSearch;
+                } else {
+                    // If runtime data not available then assgining input data
+                    valueToSearch = replacevalue2;
+                }
+            } catch (Exception e) {
+                // If runtime data not available then assgining input data.
+                valueToSearch = valueToSearch;
+            }
+            int  length = webdriver.findElements(locatorKey, locatorvalue).length();
+            int position =0;
+            for(int i=0;i<length;i++){
+
+            locatorvalue="("+locatorvalue+")["+(i+1)+"]";
+            res = webdriver.executeScript2(
+                "function getElementByXpath(path) {return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue};var a = getElementByXpath("
+                        + webdriver.escape(locatorvalue) + ");return a.innerHTML;");
+                       String  elementValue= res.get("value").toString();
+                if(elementValue.trim().equalsIgnoreCase(valueToSearch)){
+                    position=i;
+                    break;
+                }
+            }
+            return gn.storeruntime(sendRunTimeValue, String.valueOf((position+1)));        
+        }
+            catch(Exception e){
+            e.printStackTrace();
+            return false;
+        }
+       
+    }
+
+
 
 }
