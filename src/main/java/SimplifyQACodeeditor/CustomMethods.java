@@ -9,18 +9,32 @@ import com.simplifyqa.sqadrivers.webdriver;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Arrays;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.simplifyqa.FileOperations.FileOperations;
 import com.simplifyqa.Utility.InitializeDependence;
 import com.simplifyqa.method.GeneralMethod;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.Color;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.WorkbookDocument;
 
 public class CustomMethods {
     GeneralMethod gm = new GeneralMethod();
+    String clickelementId = null;
 
     public boolean checktillpmexists(String PMvalue) {
 
@@ -62,14 +76,19 @@ public class CustomMethods {
 
             while (LoadMoreCount) {
 
-                int LoadmoreCount = webdriver
-                        .findElements("xpath", "//button[@class='btn mx-button mx-listview-loadMore']/span").length();
+                Thread.sleep(600);
+
+                webdriver.scrollIntoView("xpath", "//button[contains(.,'Load more...')]");
+
+                int LoadmoreCount = webdriver.findElements("xpath", "//button[contains(.,'Load more...')]").length();
+                // webdriver.scrollIntoView("xpath", "//button[contains(.,'Load more...')]");
+
+                System.out.println("loadmorecount is " + LoadmoreCount);
 
                 if (LoadmoreCount == 1) {
+                    // webdriver.scrollIntoView("xpath", "//button[contains(.,'Load more...')]");
                     Thread.sleep(500);
-                    webdriver.scrollIntoView("xpath", "//button[@class='btn mx-button mx-listview-loadMore']/span");
-                    Thread.sleep(500);
-                    webdriver.click("xpath", "//button[@class='btn mx-button mx-listview-loadMore']/span");
+                    webdriver.click("xpath", "//button[contains(.,'Load more...')]");
                     Thread.sleep(500);
 
                 } else {
@@ -78,7 +97,7 @@ public class CustomMethods {
                 }
 
             }
-
+            Thread.sleep(1500);
             int ScoreCardCount = webdriver.findElements("xpath",
                     "//button[@class='btn mx-button mx-name-actionButton43 limit-content-list milestone-sc-list btn-default']")
                     .length();
@@ -91,32 +110,39 @@ public class CustomMethods {
                 ScoreCardsValues.add(i, ScoreCardsValues1);
             }
 
+            System.out.println("Tagged ScoreCards are : " + ScoreCardsValues);
+
             webdriver.click("xpath",
                     "(//button[contains(@class,'btn mx-button mx-name-actionButton') and contains(@class,'limit-content-list milestone-sc-list btn-default')])[1]");
             Thread.sleep(2000);
 
-            for (int i = 1; i <= ScoreCardsValues.size(); i++) {
+            for (int i = 1; i < ScoreCardsValues.size(); i++) {
 
                 webdriver.selectitemfromdropdown(ScoreCardsValues.get(i));
-                Thread.sleep(2000);
+                Thread.sleep(2500);
                 int ErrorMsgCount = webdriver
                         .findElements("xpath",
                                 "//div[text()='This Scorecard Milestone is already associated to the other Task.']")
                         .length();
+
+                Thread.sleep(1000);
                 if (ErrorMsgCount == 1) {
                     System.out.println("Error Message Validation is passed for:" + i + "value");
+                    Thread.sleep(500);
 
                 } else {
                     System.out.println("Error Message Validation is failed for:" + i + "value");
+                    Thread.sleep(500);
                     return false;
                 }
             }
 
             return true;
-        } catch (Exception e) {
-            return false;
         }
 
+        catch (Exception e) {
+            return false;
+        }
     }
 
     public boolean ProjectOngoingtoCompletedStatus() {
@@ -126,14 +152,13 @@ public class CustomMethods {
 
             while (LoadMoreCount) {
 
-                int LoadmoreCount = webdriver
-                        .findElements("xpath", "//button[@class='btn mx-button mx-listview-loadMore']/span").length();
+                webdriver.scrollIntoView("xpath", "//button[contains(.,'Load more...')]");
+
+                int LoadmoreCount = webdriver.findElements("xpath", "//button[contains(.,'Load more...')]").length();
 
                 if (LoadmoreCount == 1) {
                     Thread.sleep(500);
-                    webdriver.scrollIntoView("xpath", "//button[@class='btn mx-button mx-listview-loadMore']/span");
-                    Thread.sleep(500);
-                    webdriver.click("xpath", "//button[@class='btn mx-button mx-listview-loadMore']/span");
+                    webdriver.click("xpath", "//button[contains(.,'Load more...')]");
                     Thread.sleep(500);
 
                 } else {
@@ -142,6 +167,8 @@ public class CustomMethods {
                 }
 
             }
+
+            Thread.sleep(1500);
 
             int UpArrowIcon = webdriver
                     .findElements("xpath", "//img[@class='mx-image mx-name-image24 uparrow1 img-responsive']").length();
@@ -152,6 +179,7 @@ public class CustomMethods {
                 System.out.println("Hiding" + i + "Subtask");
                 Thread.sleep(1000);
             }
+            Thread.sleep(1500);
             int ApplicableIcon = webdriver.findElements("xpath",
                     "//button[contains(@class,'btn mx-button mx-name-actionButton') and contains(@class,'switchtoggle btn-default')]")
                     .length();
@@ -627,7 +655,7 @@ public class CustomMethods {
             Boolean StatusFlag = true;
             while (StatusFlag) {
 
-                int RowCount = webdriver.findElements(locatorKey, locatorvalue).length(); // tbody[@dojoattachpoint='gridBodyNode']/tr/td[5]
+                int RowCount = webdriver.findElements(locatorKey, locatorvalue).length();
 
                 for (int i = 1; i <= RowCount; i++) {
 
@@ -640,19 +668,19 @@ public class CustomMethods {
                     list1.add(Rvalues);
                 }
 
-                int FrwrdPageButton = webdriver
-                        .findElements("xpath",
-                                "//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward']")
+                int FrwrdPageButton = webdriver.findElements("xpath",
+                        "//div[@class='tab-pane mx-tabcontainer-pane active']//button[@aria-label='Go to next page' and @disabled='disabled']")
                         .length();
 
                 if (FrwrdPageButton == 1) {
-                    webdriver.click("xpath",
-                            "//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward']");
-                } else {
                     StatusFlag = false;
+                } else {
+                    Thread.sleep(500);
+                    webdriver.click("xpath",
+                            "(//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward'])[1]");
                 }
             }
-            webdriver.click("xpath",
+            webdriver.clickusingjs("xpath",
                     "//div[@class='mx-datagrid-head-caption' and contains(text(),'" + ReplaceHeaderValue + "')]");
             Thread.sleep(400);
             int UpArrowIcon = webdriver.findElements("xpath",
@@ -662,17 +690,34 @@ public class CustomMethods {
 
             if (UpArrowIcon == 1) {
 
-                int RowCount = webdriver.findElements(locatorKey, locatorvalue).length();
-                // List<String> list2 = new LinkedList();
-                for (int i = 1; i <= RowCount; i++) {
+                Boolean StatusFlag1 = true;
+                while (StatusFlag1) {
 
-                    String x = "(" + locatorvalue + ")[" + (i) + "]";
+                    int RowCount = webdriver.findElements(locatorKey, locatorvalue).length();
 
-                    String id = webdriver.getElementId("xpath", x);
+                    for (int i = 1; i <= RowCount; i++) {
 
-                    String Rvalues = webdriver.getElementproperty(id, "innerText");
+                        String x = "(" + locatorvalue + ")[" + (i) + "]";
 
-                    list2.add(Rvalues);
+                        String id = webdriver.getElementId("xpath", x);
+
+                        String Rvalues = webdriver.getElementproperty(id, "innerText");
+
+                        list2.add(Rvalues);
+                    }
+
+                    int FrwrdPageButton = webdriver.findElements("xpath",
+                            "//div[@class='tab-pane mx-tabcontainer-pane active']//button[@aria-label='Go to next page' and @disabled='disabled']")
+                            .length();
+
+                    if (FrwrdPageButton == 1) {
+                        Thread.sleep(500);
+                        StatusFlag1 = false;
+                    } else {
+                        Thread.sleep(500);
+                        webdriver.click("xpath",
+                                "(//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward'])[1]");
+                    }
                 }
             } else {
                 return false;
@@ -681,11 +726,13 @@ public class CustomMethods {
             webdriver.click("xpath",
                     "//button[@aria-label='Go to first page']//span[@class='glyphicon glyphicon-step-backward']");
 
+            webdriver.clickusingjs("xpath",
+                    "//div[@class='mx-datagrid-head-caption' and contains(text(),'" + ReplaceHeaderValue + "')]");
+
             Boolean DStatusFlag = true;
             while (DStatusFlag) {
 
-                int RowCount = webdriver.findElements(locatorKey, locatorvalue).length(); // tbody[@dojoattachpoint='gridBodyNode']/tr/td[5]
-                // List<String> list3 = new LinkedList();
+                int RowCount = webdriver.findElements(locatorKey, locatorvalue).length();
 
                 for (int i = 1; i <= RowCount; i++) {
 
@@ -698,49 +745,21 @@ public class CustomMethods {
                     list3.add(Rvalues);
                 }
 
-                int FrwrdPageButton = webdriver
-                        .findElements("xpath",
-                                "//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward']")
+                int FrwrdPageButton = webdriver.findElements("xpath",
+                        "//div[@class='tab-pane mx-tabcontainer-pane active']//button[@aria-label='Go to next page' and @disabled='disabled']")
                         .length();
-
                 if (FrwrdPageButton == 1) {
-                    webdriver.click("xpath",
-                            "//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward']");
+                    DStatusFlag = false;
                 } else {
-                    StatusFlag = false;
+                    Thread.sleep(500);
+                    webdriver.click("xpath",
+                            "(//button[@aria-label='Go to next page']/span[@class='glyphicon glyphicon-forward'])[1]");
                 }
-            }
-            webdriver.click("xpath",
-                    "//div[@class='mx-datagrid-head-caption' and contains(text(),'" + ReplaceHeaderValue + "')]");
-            Thread.sleep(400);
-            int BackwardArrowIcon = webdriver
-                    .findElements("xpath", "//div[text()='" + ReplaceHeaderValue + "']/..//span[text()='▼']").length();
-
-            if (BackwardArrowIcon == 1) {
-
-                int RowCount = webdriver.findElements(locatorKey, locatorvalue).length();
-                // List<String> list4 = new LinkedList();
-                for (int i = 1; i <= RowCount; i++) {
-
-                    String x = "(" + locatorvalue + ")[" + (i) + "]";
-
-                    String id = webdriver.getElementId("xpath", x);
-
-                    String Rvalues = webdriver.getElementproperty(id, "innerText");
-
-                    list4.add(Rvalues);
-                }
-            } else {
-                return false;
             }
 
             Collections.sort(list1);
 
             System.out.println("Expected Ascending order values are :" + list1);
-
-            Collections.sort(list3, Collections.reverseOrder());
-
-            System.out.println("Expected Ascending order values are :" + list3);
 
             if (list1.equals(list2)) {
                 System.out.println("Ascending order is working as expected");
@@ -749,7 +768,11 @@ public class CustomMethods {
                 return false;
             }
 
-            if (list3.equals(list4)) {
+            Collections.sort(list1, Collections.reverseOrder());
+
+            System.out.println("Expected Ascending order values are :" + list1);
+
+            if (list1.equals(list3)) {
                 System.out.println("Decending order is working as expected");
             } else {
                 System.out.println("Decending order is not working as expected");
@@ -1021,87 +1044,86 @@ public class CustomMethods {
         return true;
     }
 
-
-
     GeneralMethod gn = new GeneralMethod();
 
     public boolean separateDate(String runtimeval, String seperator, String runTimeParam) {
-		boolean bstatus = false;
-		String finalDate = "";
-		try {
-         
-			int index = 0;
-         
-           try {
-            // Getting runtime data with provided input value.
-            String replacevalue2 = "";
-            replacevalue2 = gn.getfromruntimefortestdata(runtimeval);
-            if (replacevalue2.isEmpty()) {
-                runtimeval = runtimeval;
-            } else {
-                // If runtime data not available then assgining input data
-                runtimeval = replacevalue2;
-            }
-        } catch (Exception e) {
-            // If runtime data not available then assgining input data.
-            runtimeval = runtimeval;
-        }
-            webdriver.getCurrentObject().setAttributes(InitializeDependence.findattrReplace(webdriver.getCurrentObject().getAttributes(), runtimeval));
-		 
-		 	String ele1=webdriver.getElementId();
-			String ele2 = webdriver.getElementproperty(ele1, "innerText");
+        boolean bstatus = false;
+        String finalDate = "";
+        try {
 
-			String[] stringList = ele2.split(" ");
-			// String a1 = stringList[index];
-			// 06 Feb 23 16 Aug 2023
-			String a1 = "";
-			if (Integer.parseInt(seperator) == 1) {
-				a1 = stringList[0] + " " + stringList[1] + " " + stringList[2];
-               // bstatus =true;
-			} else if (Integer.parseInt(seperator) == 2) {
-				a1 = stringList[3] + " " + stringList[4] + " " + stringList[5];
-                
-			}
-			System.out.println("==" + a1 + "==");
-			SimpleDateFormat originalFormat = new SimpleDateFormat("dd MMM yy");
-			Date date = originalFormat.parse(a1);
-			SimpleDateFormat newFormat = new SimpleDateFormat("dd MMM yyyy");
-			finalDate = newFormat.format(date);
-			System.out.println(date + "  --> " + finalDate);
-			
-		 gn.storeruntime(runTimeParam, finalDate);
-         bstatus =true;
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return bstatus;
-	}
-	
-	public boolean getAndStoreRuntime(String getruntimevalue,  String sendRunTimeValue) {
-		boolean bstatus = false;
-		
-		try {
-			String valuetoINsert=gn.getfromruntimefortestdata(getruntimevalue);
-            if(valuetoINsert.isEmpty()) {
-				valuetoINsert = getruntimevalue;
-			}
-			webdriver.getCurrentObject().setAttributes(InitializeDependence.findattrReplace(webdriver.getCurrentObject().getAttributes(), valuetoINsert));
-			String ele1=webdriver.getElementId();
-			String ele2 = webdriver.getElementproperty(ele1, "innerText");
-			System.out.println("ele2 --> "+ele2);
-			gn.storeruntime(sendRunTimeValue, ele2);
-			
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return bstatus;
-	}
+            int index = 0;
+
+            try {
+                // Getting runtime data with provided input value.
+                String replacevalue2 = "";
+                replacevalue2 = gn.getfromruntimefortestdata(runtimeval);
+                if (replacevalue2.isEmpty()) {
+                    runtimeval = runtimeval;
+                } else {
+                    // If runtime data not available then assgining input data
+                    runtimeval = replacevalue2;
+                }
+            } catch (Exception e) {
+                // If runtime data not available then assgining input data.
+                runtimeval = runtimeval;
+            }
+            webdriver.getCurrentObject().setAttributes(
+                    InitializeDependence.findattrReplace(webdriver.getCurrentObject().getAttributes(), runtimeval));
+
+            String ele1 = webdriver.getElementId();
+            String ele2 = webdriver.getElementproperty(ele1, "innerText");
+
+            String[] stringList = ele2.split(" ");
+            // String a1 = stringList[index];
+            // 06 Feb 23 16 Aug 2023
+            String a1 = "";
+            if (Integer.parseInt(seperator) == 1) {
+                a1 = stringList[0] + " " + stringList[1] + " " + stringList[2];
+                // bstatus =true;
+            } else if (Integer.parseInt(seperator) == 2) {
+                a1 = stringList[3] + " " + stringList[4] + " " + stringList[5];
+
+            }
+            System.out.println("==" + a1 + "==");
+            SimpleDateFormat originalFormat = new SimpleDateFormat("dd MMM yy");
+            Date date = originalFormat.parse(a1);
+            SimpleDateFormat newFormat = new SimpleDateFormat("dd MMM yyyy");
+            finalDate = newFormat.format(date);
+            System.out.println(date + "  --> " + finalDate);
+
+            gn.storeruntime(runTimeParam, finalDate);
+            bstatus = true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return bstatus;
+    }
+
+    public boolean getAndStoreRuntime(String getruntimevalue, String sendRunTimeValue) {
+        boolean bstatus = false;
+
+        try {
+            String valuetoINsert = gn.getfromruntimefortestdata(getruntimevalue);
+            if (valuetoINsert.isEmpty()) {
+                valuetoINsert = getruntimevalue;
+            }
+            webdriver.getCurrentObject().setAttributes(
+                    InitializeDependence.findattrReplace(webdriver.getCurrentObject().getAttributes(), valuetoINsert));
+            String ele1 = webdriver.getElementId();
+            String ele2 = webdriver.getElementproperty(ele1, "innerText");
+            System.out.println("ele2 --> " + ele2);
+            gn.storeruntime(sendRunTimeValue, ele2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return bstatus;
+    }
 
     public boolean mousehoveranelement(String getruntimevalue) {
         try {
-          
+
             try {
                 // Getting runtime data with provided input value.
                 String replacevalue2 = "";
@@ -1116,25 +1138,27 @@ public class CustomMethods {
                 // If runtime data not available then assgining input data.
                 getruntimevalue = getruntimevalue;
             }
-			String locatorvalue="",locatorKey="";
+            String locatorvalue = "", locatorKey = "";
             for (JsonNode attr : webdriver.getCurrentObject().getAttributes()) {
                 if (attr.get("name").asText().toLowerCase().equals("xpath")) {
-                    locatorKey=attr.get("name").asText();
+                    locatorKey = attr.get("name").asText();
                     locatorvalue = attr.get("value").asText();
                     break;
-                } if (attr.get("name").asText().toLowerCase().equals("id")) {
-                    locatorKey=attr.get("name").asText();
+                }
+                if (attr.get("name").asText().toLowerCase().equals("id")) {
+                    locatorKey = attr.get("name").asText();
                     locatorvalue = attr.get("value").asText();
                     break;
-                } if (attr.get("name").asText().toLowerCase().equals("class")) {
-                    locatorKey=attr.get("name").asText();
+                }
+                if (attr.get("name").asText().toLowerCase().equals("class")) {
+                    locatorKey = attr.get("name").asText();
                     locatorvalue = attr.get("value").asText();
                     break;
                 }
             }
-            locatorvalue=locatorvalue.replace("#replace", getruntimevalue);
-           return webdriver.movetoelement(locatorKey, locatorvalue);
-        
+            locatorvalue = locatorvalue.replace("#replace", getruntimevalue);
+            return webdriver.movetoelement(locatorKey, locatorvalue);
+
         } catch (Exception e) {
             e.printStackTrace();
             webdriver.logger.info("mousehoveranelement Exception:" + e.getMessage());
@@ -1142,22 +1166,23 @@ public class CustomMethods {
         }
     }
 
-    public boolean elementposition(String valueToSearch, String sendRunTimeValue){
-        try
-        {
+    public boolean elementposition(String valueToSearch, String sendRunTimeValue) {
+        try {
             JSONObject res;
-            String locatorvalue="",locatorKey="";
+            String locatorvalue = "", locatorKey = "";
             for (JsonNode attr : webdriver.getCurrentObject().getAttributes()) {
                 if (attr.get("name").asText().toLowerCase().equals("xpath")) {
-                    locatorKey=attr.get("name").asText();
+                    locatorKey = attr.get("name").asText();
                     locatorvalue = attr.get("value").asText();
                     break;
-                } if (attr.get("name").asText().toLowerCase().equals("id")) {
-                    locatorKey=attr.get("name").asText();
+                }
+                if (attr.get("name").asText().toLowerCase().equals("id")) {
+                    locatorKey = attr.get("name").asText();
                     locatorvalue = attr.get("value").asText();
                     break;
-                } if (attr.get("name").asText().toLowerCase().equals("class")) {
-                    locatorKey=attr.get("name").asText();
+                }
+                if (attr.get("name").asText().toLowerCase().equals("class")) {
+                    locatorKey = attr.get("name").asText();
                     locatorvalue = attr.get("value").asText();
                     break;
                 }
@@ -1176,29 +1201,114 @@ public class CustomMethods {
                 // If runtime data not available then assgining input data.
                 valueToSearch = valueToSearch;
             }
-            int  length = webdriver.findElements(locatorKey, locatorvalue).length();
-            int position =0;
-            for(int i=0;i<length;i++){
+            int length = webdriver.findElements(locatorKey, locatorvalue).length();
+            int position = 0;
+            for (int i = 0; i < length; i++) {
 
-            locatorvalue="("+locatorvalue+")["+(i+1)+"]";
-            res = webdriver.executeScript2(
-                "function getElementByXpath(path) {return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue};var a = getElementByXpath("
-                        + webdriver.escape(locatorvalue) + ");return a.innerHTML;");
-                       String  elementValue= res.get("value").toString();
-                if(elementValue.trim().equalsIgnoreCase(valueToSearch)){
-                    position=i;
+                locatorvalue = "(" + locatorvalue + ")[" + (i + 1) + "]";
+                res = webdriver.executeScript2(
+                        "function getElementByXpath(path) {return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue};var a = getElementByXpath("
+                                + webdriver.escape(locatorvalue) + ");return a.innerHTML;");
+                String elementValue = res.get("value").toString();
+                if (elementValue.trim().equalsIgnoreCase(valueToSearch)) {
+                    position = i;
                     break;
                 }
             }
-            return gn.storeruntime(sendRunTimeValue, String.valueOf((position+1)));        
-        }
-            catch(Exception e){
+            return gn.storeruntime(sendRunTimeValue, String.valueOf((position + 1)));
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
-       
+
     }
 
+    public boolean getdateDuration(String startDate, String EndDate, String Store) {
+        try {
 
+            SimpleDateFormat obj = new SimpleDateFormat("dd MMM yy");
+            Date date1 = obj.parse(startDate);
+            Date date2 = obj.parse(EndDate);
+            Calendar cal1 = Calendar.getInstance();
+            Calendar cal2 = Calendar.getInstance();
+            cal1.setTime(date1);
+            cal2.setTime(date2);
+            int numberOfDays = 1;
+            while (cal1.before(cal2)) {
+                if ((Calendar.SATURDAY != cal1.get(Calendar.DAY_OF_WEEK))
+                        && (Calendar.SUNDAY != cal1.get(Calendar.DAY_OF_WEEK))) {
+                    numberOfDays++;
+                }
+                cal1.add(Calendar.DATE, 1);
+            }
+            System.out.println("Exclude saturday and sunday total Number of days :" + numberOfDays);
+            String val = String.valueOf(numberOfDays);
+            int[] array = { 2 };
+            String[] value = gm.runtimeparameter(array);
+            for (int i = 0; i < value.length; i++) {
+                Store = value[i];
+                webdriver.storeruntime(Store, val);
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+
+    }
+
+    public boolean customexcelgetcelldata(String excelfilepath, String sheetname, String cellreference,
+            String runtimeparam) {
+
+        int[] array = { 3 };
+
+        try {
+
+            XSSFWorkbook workbook = new XSSFWorkbook(excelfilepath);
+
+            XSSFSheet sheet;
+
+            if (excelfilepath.contains(".xlsx")) {
+
+                FileOperations.openexcel(excelfilepath);
+
+            } else if (excelfilepath.contains(".xls")) {
+
+                FileOperations.openexcel(excelfilepath);
+
+            }
+
+            try {
+
+                sheet = workbook.getSheet(sheetname);
+
+                Cell cellvalue = null;
+
+                CellReference ref = new CellReference(cellreference);
+
+                Row row = sheet.getRow(ref.getRow());
+
+                if (row != null) {
+
+                    cellvalue = row.getCell(ref.getCol());
+
+                }
+                String[] value = gm.runtimeparameter(array);
+                for (int i = 0; i < value.length; i++) {
+                    runtimeparam = value[i];
+                    webdriver.storeruntime(runtimeparam, cellvalue.toString());
+                }
+                return true;
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+    }
 
 }
